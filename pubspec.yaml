@@ -1,5 +1,5 @@
 name: mutable_model
-description: A solution for state management and persistence based on mutable models and model attributes.
+description: A solution for Flutter state management based on mutable objects and mutable collections.
 version: 0.1.0
 author:
 homepage:

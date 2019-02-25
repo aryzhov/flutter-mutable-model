@@ -1,4 +1,4 @@
-library attribute_model;
+library mutable_model;
 
 export 'properties.dart';
 export 'model_provider.dart';
