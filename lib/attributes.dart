@@ -1,9 +1,9 @@
 import 'package:collection/equality.dart';
 
-import 'mutable.dart';
+import 'property_model.dart';
 import 'utils.dart';
 
-abstract class Attribute<T> extends Property {
+abstract class Attribute<T> extends Property<T> {
   dynamic _data;
   bool changed = false;
   get data => _data;

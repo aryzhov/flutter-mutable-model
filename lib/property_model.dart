@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-abstract class Property {
+abstract class Property<T> {
+  T value;
   bool changed;
 }
 
-abstract class MutableModel<T extends Property> extends ChangeNotifier {
+abstract class Model<T extends Property> extends ChangeNotifier {
 
   List<T> get properties;
 
