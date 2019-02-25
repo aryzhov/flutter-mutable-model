@@ -1,15 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-abstract class Mutable {
+abstract class Property {
   bool get changed;
   set changed(bool changed);
 }
 
+abstract class MutableModel<T extends Property> extends ChangeNotifier {
 
-abstract class MutableObject extends ChangeNotifier {
-
-  List<Mutable> get mutables;
+  List<T> get properties;
 
   bool flushChanges() {
     if(!changed)
@@ -20,13 +19,12 @@ abstract class MutableObject extends ChangeNotifier {
   }
 
   get changed {
-    return mutables.map((attr) => attr.changed).reduce((a, b) => a || b) ;
+    return properties.map((p) => p.changed).reduce((a, b) => a || b) ;
   }
 
   clearChanged() {
-    for(var attr in mutables)
-      attr.changed = false;
+    for(var p in properties)
+      p.changed = false;
   }
 
 }
-

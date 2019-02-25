@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'provider.dart';
 
 import 'ordered_map.dart';
+import 'model_provider.dart';
 
 typedef OrderedMapItemBuilder<T>(BuildContext context, String key, int index, T item);
 

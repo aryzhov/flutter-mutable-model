@@ -35,7 +35,7 @@ typedef Widget ModelBuilder<M>(BuildContext context, M model);
 
 class ModelConsumer<M extends Listenable> extends StatefulWidget {
 
-  M model;
+  final M model;
   final NotificationFilter<M> filter;
   final ModelBuilder<M> builder;
 

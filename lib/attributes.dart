@@ -3,20 +3,14 @@ import 'package:collection/equality.dart';
 import 'mutable.dart';
 import 'utils.dart';
 
-abstract class Attr<T> extends Mutable {
+abstract class Attribute<T> extends Property {
   dynamic _data;
-  @override
-  bool _changed = false;
-  @override
-  bool get changed => _changed;
-  set changed(c) {
-    _changed = c;
-  }
+  bool changed = false;
   get data => _data;
   set data(newData) {
     if(!equals(newData)) {
       _data = newData;
-      _changed = true;
+      changed = true;
     }
   }
   T get value;
@@ -24,10 +18,10 @@ abstract class Attr<T> extends Mutable {
   bool equals(dynamic newData);
 }
 
-class SimpleAttr<T> extends Attr<T> {
+class SimpleAttribute<T> extends Attribute<T> {
   get value => data as T;
 
-  SimpleAttr([T initialValue]) {
+  SimpleAttribute([T initialValue]) {
     if(initialValue != null)
       value = initialValue;
   }
@@ -42,9 +36,9 @@ class SimpleAttr<T> extends Attr<T> {
 
 }
 
-class BoolAttr extends SimpleAttr<bool>{
+class BoolAttribute extends SimpleAttribute<bool>{
 
-  BoolAttr([bool initialValue=false]): super(initialValue);
+  BoolAttribute([bool initialValue=false]): super(initialValue);
 
   get value => super.value ?? false;
 
@@ -54,9 +48,9 @@ class BoolAttr extends SimpleAttr<bool>{
 
 }
 
-class IntAttr extends SimpleAttr<int>{
+class IntAttribute extends SimpleAttribute<int>{
 
-  IntAttr([int initialValue]): super(initialValue);
+  IntAttribute([int initialValue]): super(initialValue);
 
   get value {
     return data is double ? data.toInt(): data as int;
@@ -68,9 +62,9 @@ class IntAttr extends SimpleAttr<int>{
 
 }
 
-class DoubleAttr extends SimpleAttr<double>{
+class DoubleAttribute extends SimpleAttribute<double>{
 
-  DoubleAttr([double initialValue]): super(initialValue);
+  DoubleAttribute([double initialValue]): super(initialValue);
 
   get value {
     return data is int ? (data as int).toDouble(): data as double;
@@ -83,13 +77,13 @@ class DoubleAttr extends SimpleAttr<double>{
 }
 
 
-class EnumAttr<E> extends Attr<E> {
+class EnumAttribute<E> extends Attribute<E> {
 
   List<E> enumValues;
 
   get value => parseEnum(enumValues, data as String);
 
-  EnumAttr(this.enumValues, [E initialValue]) {
+  EnumAttribute(this.enumValues, [E initialValue]) {
     if(initialValue != null)
       value = initialValue;
   }
@@ -104,9 +98,7 @@ class EnumAttr<E> extends Attr<E> {
 
 }
 
-class IntStrAttr extends Attr<int> {
-
-
+class IntStrAttribute extends Attribute<int> {
 
   get value => data == null ? null : int.parse(data as String);
 
@@ -119,14 +111,14 @@ class IntStrAttr extends Attr<int> {
     return data == newData;
   }
 
-  IntStrAttr([int initialValue]) {
+  IntStrAttribute([int initialValue]) {
     if(initialValue != null)
       value = initialValue;
   }
 
 }
 
-class BoolStrAttr extends Attr<bool> {
+class BoolStrAttribute extends Attribute<bool> {
 
   static final falseStr = "false";
   static final trueStr = "true";
@@ -142,7 +134,7 @@ class BoolStrAttr extends Attr<bool> {
     return data == newData;
   }
 
-  BoolStrAttr([bool initialValue]) {
+  BoolStrAttribute([bool initialValue]) {
     if(initialValue != null)
       value = initialValue;
   }
@@ -151,7 +143,7 @@ class BoolStrAttr extends Attr<bool> {
 
 
 
-abstract class MapAttr<T> extends Attr<T> {
+abstract class MapAttribute<T> extends Attribute<T> {
 
   static const equality = MapEquality();
 
@@ -165,7 +157,7 @@ abstract class MapAttr<T> extends Attr<T> {
 }
 
 
-abstract class StoredAttr extends Mutable {
+abstract class StoredAttribute extends Property {
 
   get name;
 
@@ -175,12 +167,12 @@ abstract class StoredAttr extends Mutable {
 
 }
 
-class SingleAttr<T> extends StoredAttr {
+class NamedAttribute<T> extends StoredAttribute {
 
   final String _name;
-  final Attr<T> attr;
+  final Attribute<T> attr;
 
-  SingleAttr(this._name, this.attr);
+  NamedAttribute(this._name, this.attr);
 
   get name => _name;
   bool get changed => attr.changed;
