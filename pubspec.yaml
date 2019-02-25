@@ -1,8 +1,8 @@
 name: mutable_model
 description: A solution for Flutter state management based on mutable objects and mutable collections.
 version: 0.1.0
-author:
-homepage:
+author: Alexander Ryzhov <aryzhov07@gmail.com>
+homepage: https://github.com/aryzhov/flutter-mutable-model
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
