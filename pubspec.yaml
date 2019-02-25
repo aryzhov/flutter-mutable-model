@@ -1,4 +1,4 @@
-name: attribute_model
+name: mutable_model
 description: A solution for state management and persistence based on mutable models and model attributes.
 version: 0.1.0
 author:
