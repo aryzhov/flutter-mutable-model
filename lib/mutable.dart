@@ -2,8 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 abstract class Property {
-  bool get changed;
-  set changed(bool changed);
+  bool changed;
 }
 
 abstract class MutableModel<T extends Property> extends ChangeNotifier {
