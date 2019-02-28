@@ -17,7 +17,9 @@ abstract class Property<T> extends Mutable<T> {
   }
   T get value;
   set value(T t);
-  bool dataEquals(dynamic newData);
+  bool dataEquals(dynamic newData) {
+    return data == newData;
+  }
 }
 
 class SimpleProperty<T> extends Property<T> {
