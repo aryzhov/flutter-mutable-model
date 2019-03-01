@@ -1,3 +1,5 @@
+part of mutable_model;
+
 enumStr(dynamic enumValue) {
   return enumValue?.toString()?.split('.')?.last;
 }

@@ -1,5 +1,4 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+part of mutable_model;
 
 /// A property contains a value that can be changed.
 abstract class Mutable<T> {

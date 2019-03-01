@@ -1,7 +1,4 @@
-import 'package:collection/equality.dart';
-
-import 'model.dart';
-import 'utils.dart';
+part of mutable_model;
 
 /// [Property] is a [Mutable] implementation that can convert its value before storing. Its [data] field contains the stored value.
 /// Subclasses are expected to implement the getter and setter for [value] that in turn call [data], and [dataEquals] method.
@@ -37,6 +34,31 @@ class SimpleProperty<T> extends Property<T> {
   bool dataEquals(newData) {
     return data == newData;
   }
+
+}
+
+/// A property that can have a null value or can have a default non-null value
+class DefaultValue<T> extends Property<T> {
+
+  final Property<T> prop;
+  final T defaultValue;
+
+  DefaultValue(this.prop, this.defaultValue) {
+    if(prop.value == null)
+      prop.value = defaultValue;
+  }
+
+  get value => prop.value ?? defaultValue;
+
+  set value(T newValue) {
+    prop.value = newValue ?? defaultValue;
+  }
+
+}
+
+class StringProp extends SimpleProperty<String>{
+
+  StringProp([String initialValue]): super(initialValue);
 
 }
 

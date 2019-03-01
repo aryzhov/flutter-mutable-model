@@ -1,7 +1,4 @@
-import 'package:flutter/material.dart';
-
-import 'ordered_map.dart';
-import 'model_provider.dart';
+part of mutable_model;
 
 typedef OrderedMapItemBuilder<T>(BuildContext context, String key, int index, T item);
 

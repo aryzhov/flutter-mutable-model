@@ -1,5 +1,4 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+part of mutable_model;
 
 class ModelProvider<M extends Listenable> extends InheritedNotifier<M> {
 

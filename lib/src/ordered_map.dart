@@ -1,5 +1,4 @@
-import 'package:collection/collection.dart';
-import 'package:flutter/widgets.dart';
+part of mutable_model;
 
 typedef void OrderedMapOnAdd<K, V>(K key, V value, int idx);
 typedef void OrderedMapOnRemove<K, V>(K key, V value, int idx);
@@ -95,6 +94,12 @@ class OrderedMap<K, V> extends ChangeNotifier {
 
   V at(idx) {
     return list[idx].value;
+  }
+
+  void removeAll() {
+    for(var i = list.length-1; i >= 0; i--) {
+      remove(list[i].key);
+    }
   }
 
   move(int fromIdx, int toIdx) {
