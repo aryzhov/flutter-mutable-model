@@ -4,15 +4,24 @@ part of mutable_model;
 /// Subclasses are expected to implement the getter and setter for [value] that in turn call [data], and [dataEquals] method.
 abstract class Property<T> extends Mutable<T> {
   dynamic _data;
-  bool changed = false;
+  bool _changed = false;
+  T _oldValue;
   get data => _data;
   set data(newData) {
     if(!dataEquals(newData)) {
-      _data = newData;
       changed = true;
+      _data = newData;
     }
   }
   T get value;
+  T get oldValue => _oldValue;
+  bool get changed => _changed;
+  set changed (bool c) {
+    if(c != _changed) {
+      _changed = c;
+      _oldValue = c ? value: null;
+    }
+  }
   set value(T t);
   bool dataEquals(dynamic newData) {
     return data == newData;

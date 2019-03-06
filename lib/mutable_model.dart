@@ -2,8 +2,8 @@ library mutable_model;
 
 import 'package:collection/collection.dart';
 import 'package:collection/equality.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:observable/observable.dart' as o;
 
 part 'package:mutable_model/src/model.dart';
 part 'package:mutable_model/src/model_provider.dart';

@@ -3,11 +3,12 @@ part of mutable_model;
 /// A property contains a value that can be changed.
 abstract class Mutable<T> {
   T value;
+  T oldValue;
   bool changed;
 }
 
 /// A model contains mutable properties and fires a change event when [flushChanges] is called.
-abstract class MutableModel<P extends Mutable> extends ChangeNotifier {
+abstract class MutableModel<P extends Mutable> extends o.ChangeNotifier {
 
   List<P> get properties;
 

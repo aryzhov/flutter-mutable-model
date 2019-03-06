@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  observable:
 
 dev_dependencies:
   flutter_test:

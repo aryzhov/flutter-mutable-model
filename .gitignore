@@ -1,0 +1,5 @@
+.idea/
+.packages
+android/
+ios/
+pubspec.lock
