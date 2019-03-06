@@ -2,16 +2,16 @@ part of mutable_model;
 
 typedef OrderedMapItemBuilder<T>(BuildContext context, String key, int index, T item);
 
-class OrderedMapList<E extends ChangeNotifier> extends StatelessWidget {
-  final OrderedMap<String, E> orderedMap;
+class ModelListView<E extends Listenable> extends StatelessWidget {
+  final ModelMap<String, E> modelMap;
   final WidgetBuilder emptyListBuilder;
   final OrderedMapItemBuilder<E> itemBuilder;
   final IndexedWidgetBuilder separatorBuilder;
   final bool itemBuilderUsesIndex;
 
-  OrderedMapList({
+  ModelListView({
     @required
-    this.orderedMap,
+    this.modelMap,
     @required
     this.itemBuilder,
     this.emptyListBuilder,
@@ -22,9 +22,9 @@ class OrderedMapList<E extends ChangeNotifier> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     listItemBuilder(context, idx) {
-      if(idx >= orderedMap.length)
+      if(idx >= modelMap.length)
         return emptyListBuilder(context);
-      final entry = orderedMap.list[idx];
+      final entry = modelMap.list[idx];
       final item = ModelProvider<E>(
         model: entry.value,
         child: Builder(
@@ -37,7 +37,7 @@ class OrderedMapList<E extends ChangeNotifier> extends StatelessWidget {
       return itemBuilderUsesIndex ? item : Container(key: Key(entry.key), child: item,);
     }
 
-    final listItemCount = orderedMap.length == 0 && emptyListBuilder != null ? 1 : orderedMap.length;
+    final listItemCount = modelMap.length == 0 && emptyListBuilder != null ? 1 : modelMap.length;
 
     if(separatorBuilder != null)
       return ListView.separated(itemBuilder: listItemBuilder, separatorBuilder: separatorBuilder, itemCount: listItemCount);
