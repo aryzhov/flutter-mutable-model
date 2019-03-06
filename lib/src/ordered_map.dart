@@ -32,11 +32,34 @@ class OrderedMapValueChange<K, V> extends OrderedMapChange<K, V> {
 }
 
 class OrderedMapEntry<K, V> {
-  K key;
-  V value;
-  int idx;
+  final K key;
+  final V value;
+  int _idx;
 
-  OrderedMapEntry(this.key, this.value, this.idx);
+  OrderedMapEntry(this.key, this.value, this._idx);
+
+  get idx => _idx;
+
+  dispose() {}
+}
+
+class OrderedMapListenableEntry<K, V> extends OrderedMapEntry<K, V> {
+
+  OrderedMap<K, V> map;
+
+  OrderedMapListenableEntry(this.map, K key, V value, int idx): super(key, value, idx) {
+    (value as Listenable).addListener(_onValueChange);
+  }
+
+  _onValueChange() {
+    map.checkEntryPosition(this);
+  }
+
+  @override
+  dispose() {
+    (value as Listenable).removeListener(_onValueChange);
+  }
+
 }
 
 typedef int Comparator<T>(T a, T b);
@@ -65,39 +88,44 @@ class OrderedMap<K, V> extends ChangeNotifier {
       final list2 = List.of(list);
       list2.sort(this._compareFunc);
       for(var i = 0; i < list2.length; i++) {
-        move(list2[i].idx, i);
+        move(list2[i]._idx, i);
       }
     }
   }
 
   int put(K key, V value) {
     final entry = map[key];
+    if(entry != null && entry.value == value)
+      return entry._idx;
+    final newEntry = (value is Listenable) ? OrderedMapListenableEntry<K, V>(this, key, value, null): OrderedMapEntry(key, value, null);
     if(entry == null) {
-      final newEntry = OrderedMapEntry(key, value, null);
       final idx = lowerBound(list, newEntry, compare: _compareFunc);
-      newEntry.idx = idx;
+      newEntry._idx = idx;
       map[key] = newEntry;
       list.insert(idx, newEntry);
       for(var i = idx + 1; i < list.length; i++)
-        list[i].idx = i;
+        list[i]._idx = i;
       _streamController.add(OrderedMapAdd(map: this, key: key, value: value, idx: idx));
       notifyListeners();
-      return idx;
     } else {
-      final oldValue = entry.value;
-      if(oldValue == value)
-        return entry.idx;
-      entry.value = value;
-      final entry2 = OrderedMapEntry(key, value, null);
-      final idx = lowerBound(list, entry2, compare: _compareFunc);
-      _streamController.add(OrderedMapReplace(map: this, key: key, oldValue: oldValue, value: value, idx: entry.idx));
+      newEntry._idx = entry._idx;
+      map[key] = newEntry;
+      list[entry._idx] = newEntry;
+      _streamController.add(OrderedMapReplace(map: this, key: key, oldValue: entry.value, value: value, idx: entry._idx));
       notifyListeners();
-      final shouldMove = (idx < entry.idx - 1 || idx > entry.idx + 1 ||
-          (idx != entry.idx && _compareFunc(entry, entry2) != 0));
-      if(shouldMove) {
-        move(entry.idx, idx);
-      }
-      return entry.idx;
+      checkEntryPosition(newEntry);
+      entry.dispose();
+    }
+    return newEntry._idx;
+  }
+
+  checkEntryPosition(OrderedMapEntry<K, V> entry) {
+    final entry2 = OrderedMapEntry(entry.key, entry.value, null);
+    final idx = lowerBound(list, entry2, compare: _compareFunc);
+    final shouldMove = (idx < entry._idx - 1 || idx > entry._idx + 1 ||
+        (idx != entry._idx && _compareFunc(entry, entry2) != 0));
+    if(shouldMove) {
+      move(entry._idx, idx);
     }
   }
 
@@ -105,11 +133,11 @@ class OrderedMap<K, V> extends ChangeNotifier {
     var entry = map.remove(key);
     if(entry == null)
       return null;
-    list.removeAt(entry.idx);
-    _streamController.add(OrderedMapRemove(map: this, key: key, value: entry.value, idx: entry.idx));
+    list.removeAt(entry._idx);
+    _streamController.add(OrderedMapRemove(map: this, key: key, value: entry.value, idx: entry._idx));
     notifyListeners();
-    for(var i = entry.idx; i < list.length; i++)
-      list[i].idx = i;
+    for(var i = entry._idx; i < list.length; i++)
+      list[i]._idx = i;
     return entry.value;
   }
 
@@ -139,10 +167,10 @@ class OrderedMap<K, V> extends ChangeNotifier {
     list.insert(toIdx, entry);
     if(fromIdx < toIdx) {
       for(var i = fromIdx; i <= toIdx; i++)
-        list[i].idx = i;
+        list[i]._idx = i;
     } else {
       for(var i = toIdx; i <= fromIdx; i++)
-        list[i].idx = i;
+        list[i]._idx = i;
     }
     _streamController.add(OrderedMapMove(map: this, key: entry.key, value: entry.value, fromIdx: fromIdx, toIdx: toIdx));
     notifyListeners();
@@ -150,7 +178,7 @@ class OrderedMap<K, V> extends ChangeNotifier {
 
   indexOf(key) {
     var entry = map[key];
-    return entry?.idx ?? -1;
+    return entry?._idx ?? -1;
   }
 
   V operator [] (K key) {
