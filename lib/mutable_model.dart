@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:collection/equality.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'dart:async';
 
 part 'package:mutable_model/src/model.dart';
 part 'package:mutable_model/src/model_provider.dart';

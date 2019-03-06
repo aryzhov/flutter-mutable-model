@@ -1,9 +1,35 @@
 part of mutable_model;
 
-typedef void OrderedMapOnAdd<K, V>(K key, V value, int idx);
-typedef void OrderedMapOnRemove<K, V>(K key, V value, int idx);
-typedef void OrderedMapOnReplace<K, V>(K key, V oldValue, V value, int idx);
-typedef void OrderedMapOnMove<K, V>(K key, V value, int fromIdx, int toIdx);
+class OrderedMapChange<K, V> {
+  final OrderedMap<K, V> map;
+  final K key;
+  final V value;
+  final int idx;
+  OrderedMapChange({this.map, this.key, this.value, this.idx});
+}
+
+class OrderedMapAdd<K, V> extends OrderedMapChange<K, V> {
+  OrderedMapAdd({OrderedMap<K, V> map, K key, V value, idx}): super(map: map, key: key, value: value, idx: idx);
+}
+
+class OrderedMapRemove<K, V> extends OrderedMapChange<K, V> {
+  OrderedMapRemove({OrderedMap<K, V> map, K key, V value, int idx}): super(map: map, key: key, value: value, idx: idx);
+}
+
+class OrderedMapReplace<K, V> extends OrderedMapChange<K, V> {
+  final V oldValue;
+  OrderedMapReplace({OrderedMap<K, V> map, K key, V value, int idx, this.oldValue}): super(map: map, key: key, value: value, idx: idx);
+}
+
+class OrderedMapMove<K, V> extends OrderedMapChange<K, V> {
+  final int toIdx;
+  OrderedMapMove({OrderedMap<K, V> map, K key, V value, int fromIdx, this.toIdx}): super(map: map, key: key, value: value, idx: fromIdx);
+}
+
+class OrderedMapValueChange<K, V> extends OrderedMapChange<K, V> {
+  final dynamic data;
+  OrderedMapValueChange({OrderedMap<K, V> map, K key, V value, int idx, this.data}): super(map: map, key: key, value: value, idx: idx);
+}
 
 class OrderedMapEntry<K, V> {
   K key;
@@ -18,14 +44,16 @@ typedef int Comparator<T>(T a, T b);
 class OrderedMap<K, V> extends ChangeNotifier {
   final list = List<OrderedMapEntry<K, V>>();
   final map = Map<K, OrderedMapEntry<K, V>>();
-  OrderedMapOnAdd<K, V> onAdd;
-  OrderedMapOnRemove<K, V> onRemove;
-  OrderedMapOnReplace<K, V> onReplace;
-  OrderedMapOnMove<K, V> onMove;
+  final _streamController = StreamController<OrderedMapChange<K, V>>();
+
   Comparator<OrderedMapEntry<K, V>> _compareFunc;
 
   OrderedMap() {
     orderBy(null);
+  }
+
+  Stream<OrderedMapChange> get stream {
+    return _streamController.stream;
   }
 
   void orderBy(Comparator<V> comparator, {bool descending=false}) {
@@ -52,8 +80,7 @@ class OrderedMap<K, V> extends ChangeNotifier {
       list.insert(idx, newEntry);
       for(var i = idx + 1; i < list.length; i++)
         list[i].idx = i;
-      if(onAdd != null)
-        onAdd(key, value, idx);
+      _streamController.add(OrderedMapAdd(map: this, key: key, value: value, idx: idx));
       notifyListeners();
       return idx;
     } else {
@@ -63,14 +90,13 @@ class OrderedMap<K, V> extends ChangeNotifier {
       entry.value = value;
       final entry2 = OrderedMapEntry(key, value, null);
       final idx = lowerBound(list, entry2, compare: _compareFunc);
-      if(onReplace != null)
-        onReplace(key, oldValue, value, entry.idx);
+      _streamController.add(OrderedMapReplace(map: this, key: key, oldValue: oldValue, value: value, idx: entry.idx));
+      notifyListeners();
       final shouldMove = (idx < entry.idx - 1 || idx > entry.idx + 1 ||
           (idx != entry.idx && _compareFunc(entry, entry2) != 0));
       if(shouldMove) {
         move(entry.idx, idx);
       }
-      notifyListeners();
       return entry.idx;
     }
   }
@@ -80,8 +106,7 @@ class OrderedMap<K, V> extends ChangeNotifier {
     if(entry == null)
       return null;
     list.removeAt(entry.idx);
-    if(onRemove != null)
-      onRemove(key, entry.value, entry.idx);
+    _streamController.add(OrderedMapRemove(map: this, key: key, value: entry.value, idx: entry.idx));
     notifyListeners();
     for(var i = entry.idx; i < list.length; i++)
       list[i].idx = i;
@@ -119,8 +144,7 @@ class OrderedMap<K, V> extends ChangeNotifier {
       for(var i = toIdx; i <= fromIdx; i++)
         list[i].idx = i;
     }
-    if(onMove != null)
-      onMove(entry.key, entry.value, fromIdx, toIdx);
+    _streamController.add(OrderedMapMove(map: this, key: entry.key, value: entry.value, fromIdx: fromIdx, toIdx: toIdx));
     notifyListeners();
   }
 
