@@ -42,7 +42,7 @@ class OrderedMapEntry<K, V> {
 }
 
 typedef int Comparator<T>(T a, T b);
-
+typedef bool Filter<K, V>(OrderedMapEntry<K, V> entry);
 
 class OrderedMap<K, V> {
   final list = List<OrderedMapEntry<K, V>>();
@@ -197,4 +197,29 @@ class OrderedMap<K, V> {
 
   bool get isEmpty => list.isEmpty;
   bool get isNotEmpty => list.isNotEmpty;
+
+  // Makes this map contain a subset of items of another map
+  // The order of the elements is determined by this map's orderBy() setting.
+  StreamSubscription<OrderedMapChange<K, V>> filter(OrderedMap<K, V> source,
+      Filter<K, V> filter) {
+    for(var entry in list) {
+      if(filter(entry))
+        put(entry.key, entry.value);
+    }
+    return source.stream.listen((change) {
+      final entry = change.entry;
+      if (change is OrderedMapAdd) {
+        if (filter(entry))
+          put(entry.key, entry.value);
+      } else if (change is OrderedMapRemove) {
+        remove(entry.key);
+      } else if (change is OrderedMapReplace || change is OrderedMapValueChange) {
+        if (filter(change.entry))
+          put(entry.key, entry.value);
+        else
+          remove(entry.key);
+      }
+    });
+  }
+
 }
