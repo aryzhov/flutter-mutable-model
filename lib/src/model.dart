@@ -7,8 +7,14 @@ abstract class Mutable<T> {
   bool changed;
 }
 
+class MutableModelChange<M extends MutableModel> extends o.ChangeRecord {
+  final M model;
+  final Map<Mutable, dynamic> oldValues;
+  MutableModelChange(this.model, this.oldValues);
+}
+
 /// A model contains mutable properties and fires a change event when [flushChanges] is called.
-abstract class MutableModel<P extends Mutable> extends o.ChangeNotifier {
+abstract class MutableModel<P extends Mutable> extends o.ChangeNotifier<MutableModelChange> with ChangeNotifier {
 
   List<P> get properties;
 
@@ -16,15 +22,35 @@ abstract class MutableModel<P extends Mutable> extends o.ChangeNotifier {
   bool flushChanges() {
     if(!changed)
       return false;
-    notifyListeners();
+    if(hasObservers) {
+      final Map<P, dynamic> oldValues = Map.fromEntries(properties.where(
+              (p) => p.changed).map((p) =>
+          MapEntry<P, dynamic>(p, p.oldValue)));
+      notifyChange(MutableModelChange(this, oldValues));
+    }
+    if(hasListeners)
+      notifyListeners();
     for(var p in properties)
       p.changed = false;
     return true;
   }
 
+//  @override
+//  bool deliverChanges() {
+//    try {
+//      return super.deliverChanges();
+//    } finally {
+//      for(var p in properties)
+//        p.changed = false;
+//    }
+//  }
+//
   /// Returns true if any of the properties has changed.
   get changed {
-    return properties.map((p) => p.changed).reduce((a, b) => a || b) ;
+    for(var p in properties)
+      if(p.changed)
+        return true;
+    return false;
   }
 
 }
