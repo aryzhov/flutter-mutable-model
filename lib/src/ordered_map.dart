@@ -200,9 +200,13 @@ class OrderedMap<K, V> {
 
   // Makes this map contain a subset of items of another map
   // The order of the elements is determined by this map's orderBy() setting.
-  StreamSubscription<OrderedMapChange<K, V>> filter(OrderedMap<K, V> source,
-      Filter<K, V> filter) {
-    for(var entry in list) {
+  StreamSubscription<OrderedMapChange<K, V>> filter(OrderedMap<K, V> source, Filter<K, V> filter) {
+    for(var i = list.length; i >= 0; i--) {
+      final entry = list[i];
+      if(!filter(entry))
+        remove(entry.key);
+    }
+    for(var entry in source.list) {
       if(filter(entry))
         put(entry.key, entry.value);
     }
