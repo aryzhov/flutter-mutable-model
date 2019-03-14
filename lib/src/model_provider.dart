@@ -29,7 +29,7 @@ class ModelProvider<M extends Listenable> extends InheritedNotifier<M> {
 
 }
 
-typedef bool NotificationFilter<M extends Listenable>(m);
+typedef bool NotificationFilter<M extends Listenable>(M model);
 typedef Widget ModelBuilder<M>(BuildContext context, M model);
 
 class ModelConsumer<M extends Listenable> extends StatefulWidget {
