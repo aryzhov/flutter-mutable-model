@@ -79,7 +79,7 @@ class ModelConsumerState<M extends Listenable> extends State<ModelConsumer<M>> {
   }
 
   _modelChanged() {
-    if(widget.filter(model)) {
+    if(widget.filter == null || widget.filter(model)) {
       setState(() {
       });
     }
