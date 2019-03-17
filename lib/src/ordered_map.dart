@@ -29,7 +29,7 @@ class OrderedMapValueChange<K, V> extends OrderedMapChange<K, V> {
   OrderedMapValueChange(OrderedMap<K, V> map, OrderedMapEntry<K, V> entry, this.data): super(map, entry);
 }
 
-class OrderedMapEntry<K, V> {
+class OrderedMapEntry<K, V> implements MapEntry<K, V> {
   final K key;
   final V value;
   int _idx;
@@ -44,9 +44,9 @@ class OrderedMapEntry<K, V> {
 typedef int Comparator<T>(T a, T b);
 typedef bool Filter<K, V>(OrderedMapEntry<K, V> entry);
 
-class OrderedMap<K, V> {
-  final list = List<OrderedMapEntry<K, V>>();
-  final map = LinkedHashMap<K, OrderedMapEntry<K, V>>();
+class OrderedMap<K, V> implements Map<K, V> {
+  final _list = List<OrderedMapEntry<K, V>>();
+  final _map = LinkedHashMap<K, OrderedMapEntry<K, V>>();
   final _streamController = StreamController<OrderedMapChange<K, V>>();
 
   Comparator<OrderedMapEntry<K, V>> _compareFunc;
@@ -63,8 +63,8 @@ class OrderedMap<K, V> {
         int k = comparator(a.value, b.value);
         return descending ? -k: k;
       };
-      if(list.isNotEmpty) {
-        final list2 = List.of(list);
+      if(_list.isNotEmpty) {
+        final list2 = List.of(_list);
         list2.sort(this._compareFunc);
         for(var i = 0; i < list2.length; i++) {
           move(list2[i]._idx, i);
@@ -78,22 +78,22 @@ class OrderedMap<K, V> {
   }
 
   int put(K key, V value) {
-    final oldEntry = map[key];
+    final oldEntry = _map[key];
     if(oldEntry != null && oldEntry.value == value)
       return oldEntry._idx;
     final entry = createMapEntry(key, value, null);
     if(oldEntry == null) {
-      final idx = _compareFunc == null ? length : lowerBound(list, entry, compare: _compareFunc);
+      final idx = _compareFunc == null ? length : lowerBound(_list, entry, compare: _compareFunc);
       entry._idx = idx;
-      map[key] = entry;
-      list.insert(idx, entry);
-      for(var i = idx + 1; i < list.length; i++)
-        list[i]._idx = i;
+      _map[key] = entry;
+      _list.insert(idx, entry);
+      for(var i = idx + 1; i < _list.length; i++)
+        _list[i]._idx = i;
       _streamController.add(OrderedMapAdd(this, oldEntry));
     } else {
       entry._idx = oldEntry._idx;
-      map[key] = entry;
-      list[oldEntry._idx] = entry;
+      _map[key] = entry;
+      _list[oldEntry._idx] = entry;
       _streamController.add(OrderedMapReplace(this, entry, oldEntry));
       oldEntry.dispose();
       _checkEntryPosition(entry);
@@ -102,7 +102,7 @@ class OrderedMap<K, V> {
   }
 
   valueChanged(K key, [dynamic valueChangeEventData]) {
-    final entry = map[key];
+    final entry = _map[key];
     if(entry != null) {
       _streamController.add(OrderedMapValueChange(this, entry, valueChangeEventData));
       _checkEntryPosition(entry);
@@ -113,7 +113,7 @@ class OrderedMap<K, V> {
     if(_compareFunc == null)
       return;
     final entry2 = OrderedMapEntry(entry.key, entry.value, null);
-    final idx = lowerBound(list, entry2, compare: _compareFunc);
+    final idx = lowerBound(_list, entry2, compare: _compareFunc);
     final shouldMove = (idx < entry._idx - 1 || idx > entry._idx + 1 ||
         (idx != entry._idx && _compareFunc(entry, entry2) != 0));
     if(shouldMove) {
@@ -122,57 +122,57 @@ class OrderedMap<K, V> {
   }
 
   V remove(key) {
-    var entry = map.remove(key);
+    var entry = _map.remove(key);
     if(entry == null)
       return null;
-    list.removeAt(entry._idx);
+    _list.removeAt(entry._idx);
     _streamController.add(OrderedMapRemove(this, entry));
-    for(var i = entry._idx; i < list.length; i++)
-      list[i]._idx = i;
+    for(var i = entry._idx; i < _list.length; i++)
+      _list[i]._idx = i;
     return entry.value;
   }
 
   int get length {
-    return list.length;
+    return _list.length;
   }
 
   V at(idx) {
-    return list[idx].value;
+    return _list[idx].value;
   }
 
   void removeAll() {
-    for(var i = list.length-1; i >= 0; i--) {
-      remove(list[i].key);
+    for(var i = _list.length-1; i >= 0; i--) {
+      remove(_list[i].key);
     }
   }
 
   move(int fromIdx, int toIdx) {
     assert(fromIdx >= 0);
     assert(toIdx >= 0);
-    assert(fromIdx < list.length);
-    assert(toIdx < list.length);
+    assert(fromIdx < _list.length);
+    assert(toIdx < _list.length);
     if(fromIdx == toIdx)
       return;
-    var entry = list[fromIdx];
-    list.removeAt(fromIdx);
-    list.insert(toIdx, entry);
+    var entry = _list[fromIdx];
+    _list.removeAt(fromIdx);
+    _list.insert(toIdx, entry);
     if(fromIdx < toIdx) {
       for(var i = fromIdx; i <= toIdx; i++)
-        list[i]._idx = i;
+        _list[i]._idx = i;
     } else {
       for(var i = toIdx; i <= fromIdx; i++)
-        list[i]._idx = i;
+        _list[i]._idx = i;
     }
     _streamController.add(OrderedMapMove(this, entry, fromIdx));
   }
 
   indexOf(key) {
-    var entry = map[key];
+    var entry = _map[key];
     return entry?._idx ?? -1;
   }
 
-  V operator [] (K key) {
-    return map[key]?.value;
+  V operator [] (Object key) {
+    return _map[key]?.value;
   }
 
   void operator []= (K key, V value) {
@@ -180,33 +180,33 @@ class OrderedMap<K, V> {
   }
 
   Iterable<V> elements() {
-    return list.map((entry) => entry.value);
+    return _list.map((entry) => entry.value);
   }
 
-  Iterable<MapEntry<K, V>> entries() {
-    return list.map((entry) =>  MapEntry(entry.key, entry.value));
+//  Iterable<MapEntry<K, V>> entries() {
+//    return list.map((entry) =>  MapEntry(entry.key, entry.value));
+//  }
+//
+//  Iterable<K> keys() {
+//    return list.map((entry) => entry.key);
+//  }
+
+  bool containsKey(Object key) {
+    return _map.containsKey(key);
   }
 
-  Iterable<K> keys() {
-    return list.map((entry) => entry.key);
-  }
-
-  bool containsKey(K key) {
-    return map.containsKey(key);
-  }
-
-  bool get isEmpty => list.isEmpty;
-  bool get isNotEmpty => list.isNotEmpty;
+  bool get isEmpty => _list.isEmpty;
+  bool get isNotEmpty => _list.isNotEmpty;
 
   // Makes this map contain a subset of items of another map
   // The order of the elements is determined by this map's orderBy() setting.
   StreamSubscription<OrderedMapChange<K, V>> filter(OrderedMap<K, V> source, Filter<K, V> filter) {
-    for(var i = list.length; i >= 0; i--) {
-      final entry = list[i];
+    for(var i = _list.length; i >= 0; i--) {
+      final entry = _list[i];
       if(!filter(entry))
         remove(entry.key);
     }
-    for(var entry in source.list) {
+    for(var entry in source._list) {
       if(filter(entry))
         put(entry.key, entry.value);
     }
@@ -225,5 +225,96 @@ class OrderedMap<K, V> {
       }
     });
   }
+
+  @override
+  Iterable<V> get values {
+    return _list.map((e) => e.value);
+  }
+
+  @override
+  Iterable<K> get keys {
+    return _map.keys;
+  }
+
+  @override
+  void forEach(void f(K key, V value)) {
+    _list.forEach((e) => f(e.key, e.value));
+  }
+
+  @override
+  void clear() {
+    removeWhere((k, v) => true);
+  }
+
+  @override
+  void addAll(Map<K, V> other) {
+    other.entries.forEach((me) => put(me.key, me.value));
+  }
+
+  @override
+  V putIfAbsent(K key, V ifAbsent()) {
+    if(!containsKey(key)) {
+      final value = ifAbsent();
+      put(key, value);
+      return value;
+    } else {
+      return this[key];
+    }
+  }
+
+  @override
+  void removeWhere(bool predicate(K key, V value)) {
+    for(var i = _list.length-1; i >= 0; i--) {
+      final item = _list[i];
+      if (predicate(item.key, item.value))
+        remove(_list[i].key);
+    }
+  }
+
+  @override
+  void updateAll(V update(K key, V value)) {
+    _list.forEach((e) => update(e.key, e.value));
+  }
+
+  @override
+  V update(K key, V update(V value), {V ifAbsent()}) {
+    if(containsKey(key)) {
+      final newValue = update(this[key]);
+      put(key, newValue);
+      return newValue;
+    } else {
+      return putIfAbsent(key, ifAbsent);
+    }
+  }
+
+  @override
+  void addEntries(Iterable<MapEntry<K, V>> newEntries) {
+    for(var me in newEntries)
+      put(me.key, me.value);
+  }
+
+  @override
+  Iterable<MapEntry<K, V>> get entries {
+    return _list;
+  }
+
+  @override
+  bool containsValue(Object value) {
+    for(var e in _list)
+      if(e.value == value)
+        return true;
+    return false;
+  }
+
+  @override
+  Map<RK, RV> cast<RK, RV>() {
+    throw UnimplementedError();
+  }
+
+  @override
+  Map<K2, V2> map<K2, V2>(MapEntry<K2, V2> f(K key, V value)) {
+    return Map.fromEntries(_list.map((me) => f(me.key, me.value)));
+  }
+
 
 }

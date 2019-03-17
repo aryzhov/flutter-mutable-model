@@ -24,7 +24,7 @@ class ModelListView<E extends Listenable> extends StatelessWidget {
     listItemBuilder(context, idx) {
       if(idx >= modelMap.length)
         return emptyListBuilder(context);
-      final entry = modelMap.list[idx];
+      final entry = modelMap._list[idx];
       final item = ModelProvider<E>(
         model: entry.value,
         child: Builder(
