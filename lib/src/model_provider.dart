@@ -40,7 +40,6 @@ class ModelConsumer<M extends Listenable> extends StatefulWidget {
 
   ModelConsumer({
     this.model,
-    @required
     this.filter,
     @required
     this.builder});
