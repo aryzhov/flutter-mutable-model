@@ -10,14 +10,30 @@ abstract class Mutable<T> {
 abstract class MutableModel<P extends Mutable> extends ChangeNotifier {
 
   List<P> get properties;
+  bool _flushing = false;
+  bool _repeatFlush = false;
 
   /// Fires a change event and clears the change flag on all properties. Returns true if there were changes.
   bool flushChanges() {
-    if(!changed)
+    if(_flushing) {
+      _repeatFlush = true;
       return false;
-    notifyListeners();
-    for(var p in properties)
-      p.changed = false;
+    }
+    final changed = Set.from(properties.where((p) => p.changed));
+    if(changed.isEmpty)
+      return false;
+    try {
+      _flushing = true;
+      notifyListeners();
+    } finally {
+      _flushing = false;
+      for(var p in changed)
+        p.changed = false;
+      if(_repeatFlush) {
+        _repeatFlush = false;
+        flushChanges();
+      }
+    }
     return true;
   }
 

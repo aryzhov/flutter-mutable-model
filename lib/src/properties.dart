@@ -169,8 +169,12 @@ class BoolStrProp extends Property<bool> {
 
 class DateTimeProp extends SimpleProperty<DateTime> {
 
-    DateTimeProp([DateTime initialValue]): super(initialValue);
+  DateTimeProp([DateTime initialValue]): super(initialValue);
 
+  @override
+  bool dataEquals(dynamic newData) {
+    return data == newData || ((data is DateTime) && (newData is DateTime) && (data as DateTime).compareTo(newData) == 0);
+  }
 }
 
 abstract class MapProp<T> extends Property<T> {
