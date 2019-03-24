@@ -45,11 +45,18 @@ typedef int Comparator<T>(T a, T b);
 typedef bool Filter<K, V>(OrderedMapEntry<K, V> entry);
 
 class OrderedMap<K, V> implements Map<K, V> {
-  final _list = List<OrderedMapEntry<K, V>>();
-  final _map = LinkedHashMap<K, OrderedMapEntry<K, V>>();
-  final _streamController = StreamController<OrderedMapChange<K, V>>();
-
+  final List<OrderedMapEntry<K, V>> _list;
+  final Map<K, OrderedMapEntry<K, V>> _map;
+  final StreamController<OrderedMapChange<K, V>> _streamController;
   Comparator<OrderedMapEntry<K, V>> _compareFunc;
+
+  OrderedMap({List<OrderedMapEntry<K, V>> list,
+      Map<K, OrderedMapEntry<K, V>> map,
+      StreamController<OrderedMapChange<K, V>> streamController}):
+    this._list = list ?? List<OrderedMapEntry<K, V>>(),
+    this._map = map ?? Map<K, OrderedMapEntry<K, V>>(),
+    this._streamController = streamController ?? StreamController<OrderedMapChange<K, V>>();
+
 
   Stream<OrderedMapChange> get stream {
     return _streamController.stream;
