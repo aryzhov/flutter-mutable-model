@@ -1,5 +1,60 @@
 part of mutable_model;
 
+/// A property contains a value that can be changed.
+abstract class Property<T> {
+  T value;
+  T get oldValue;
+  bool changed;
+  bool equals(Property<T> other);
+  void copyFrom(Property<T> other);
+
+  factory Property([T initialValue]) => SimpleProperty<T>(initialValue);
+}
+
+/// A property that stores its data without conversion.
+class SimpleProperty<T> implements Property<T> {
+
+  @override
+  T value;
+
+  @override
+  T oldValue;
+
+  @override
+  bool get changed => !valueEquals(oldValue);
+
+  @override
+  set changed(ch) {
+    if(!ch)
+      oldValue = value;
+  }
+
+  SimpleProperty([T initialValue]) {
+    value = initialValue;
+    changed = false;
+  }
+
+  @override
+  bool equals(Property<T> other) {
+    return other is SimpleProperty<T> && valueEquals(other.value);
+  }
+
+  /// Override this method for custom comparison
+  bool valueEquals(T otherValue) {
+    final thisValue = this.value;
+    if(thisValue is DateTime && otherValue is DateTime)
+      return thisValue.compareTo(otherValue) == 0;
+    else
+      return value == otherValue;
+  }
+
+  void copyFrom(Property<T> other) {
+    value = other.value;
+  }
+
+}
+
+
 /// A property that converts its value to an easily serializable form for storing
 abstract class DataProperty<T> implements Property<T> {
   dynamic _data;
@@ -77,45 +132,6 @@ abstract class DataProperty<T> implements Property<T> {
   /// Override this method for custom equality behavior
   bool dataEquals(dynamic newData) {
     return data == newData;
-  }
-
-}
-
-/// A property that stores its data without conversion
-class SimpleProperty<T> implements Property<T> {
-
-  @override
-  T value;
-
-  @override
-  T oldValue;
-
-  @override
-  bool get changed => !valueEquals(oldValue);
-
-  @override
-  set changed(ch) {
-    if(!ch)
-      oldValue = value;
-  }
-
-  SimpleProperty([T initialValue]) {
-    value = initialValue;
-    changed = false;
-  }
-
-  @override
-  bool equals(Property<T> other) {
-    return other is SimpleProperty<T> && valueEquals(other.value);
-  }
-
-  /// Override this method for custom comparison
-  bool valueEquals(T otherValue) {
-    return this.value == otherValue;
-  }
-
-  void copyFrom(Property<T> other) {
-    value = other.value;
   }
 
 }
@@ -229,17 +245,6 @@ class DateTimeProp extends DataProperty<DateTime> {
   @override
   bool dataEquals(dynamic newData) {
     return data == newData || ((data is DateTime) && (newData is DateTime) && (data as DateTime).compareTo(newData) == 0);
-  }
-}
-
-
-class DateTimeProperty extends SimpleProperty<DateTime> {
-
-  DateTimeProperty([DateTime initialValue]): super(initialValue);
-
-  @override
-  bool valueEquals(DateTime other) {
-    return value == other || (value != null && other != null && value.compareTo(other) == 0);
   }
 }
 

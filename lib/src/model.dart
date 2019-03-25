@@ -1,16 +1,8 @@
 part of mutable_model;
 
-abstract class Property<T> {
-  T value;
-  T get oldValue;
-  bool changed;
-  bool equals(Property<T> other);
-  void copyFrom(Property<T> other);
-}
+typedef Model<P> ModelFactory<P extends Property>();
 
-typedef MutableModel<P> ModelFactory<P extends Property>();
-
-abstract class MutableModel<P extends Property> extends ChangeNotifier {
+abstract class Model<P extends Property> extends ChangeNotifier {
 
   Iterable<P> get properties;
   bool _flushing = false;
@@ -48,7 +40,7 @@ abstract class MutableModel<P extends Property> extends ChangeNotifier {
     return false;
   }
 
-  void copyFrom(MutableModel<P> other, {bool clearChanges = true}) {
+  void copyFrom(Model<P> other, {bool clearChanges = true}) {
     var it0 = other.properties.iterator;
     var it1 = this.properties.iterator;
     while(it0.moveNext() && it1.moveNext()) {
