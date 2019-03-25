@@ -1,15 +1,18 @@
 part of mutable_model;
 
-/// A property contains a value that can be changed.
-abstract class Mutable<T> {
+abstract class Property<T> {
   T value;
+  T get oldValue;
   bool changed;
+  bool equals(Property<T> other);
+  void copyFrom(Property<T> other);
 }
 
-/// A model contains mutable properties and fires a change event when [flushChanges] is called.
-abstract class MutableModel<P extends Mutable> extends ChangeNotifier {
+typedef MutableModel<P> ModelFactory<P extends Property>();
 
-  List<P> get properties;
+abstract class MutableModel<P extends Property> extends ChangeNotifier {
+
+  Iterable<P> get properties;
   bool _flushing = false;
   bool _repeatFlush = false;
 
@@ -39,7 +42,22 @@ abstract class MutableModel<P extends Mutable> extends ChangeNotifier {
 
   /// Returns true if any of the properties has changed.
   get changed {
-    return properties.map((p) => p.changed).reduce((a, b) => a || b) ;
+    for(var p in properties)
+      if(p.changed)
+        return true;
+    return false;
+  }
+
+  void copyFrom(MutableModel<P> other, {bool clearChanges = true}) {
+    var it0 = other.properties.iterator;
+    var it1 = this.properties.iterator;
+    while(it0.moveNext() && it1.moveNext()) {
+      final p0 = it0.current;
+      final p1 = it1.current;
+      p1.copyFrom(p0);
+      if(clearChanges)
+        p1.changed = false;
+    }
   }
 
 }
