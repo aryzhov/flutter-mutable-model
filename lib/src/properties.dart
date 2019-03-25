@@ -120,42 +120,6 @@ class SimpleProperty<T> implements Property<T> {
 
 }
 
-/// A property that can have a null value or can have a default non-null value
-class DefaultValue<T> extends Property<T> {
-
-  final DataProperty<T> prop;
-  final T defaultValue;
-
-  DefaultValue(this.prop, this.defaultValue) {
-    if(prop.value == null)
-      prop.value = defaultValue;
-  }
-
-  get value => prop.value ?? defaultValue;
-  get oldValue => prop.oldValue ?? defaultValue;
-  get changed => prop.changed;
-
-  set changed(ch) {
-   prop.changed = ch;
-  }
-
-  set value(T newValue) {
-    prop.value = newValue ?? defaultValue;
-  }
-
-  @override
-  bool equals(Property<T> other) {
-    return (other is DefaultValue<T> && defaultValue == other.defaultValue && prop.equals(other.prop));
-  }
-
-  void copyFrom(Property<T> other) {
-    prop.copyFrom(other);
-    if(prop.value == null)
-      prop.value = defaultValue;
-  }
-
-}
-
 class StringProp extends DataProperty<String>{
 
   StringProp([String initialValue]): super(initialValue);
