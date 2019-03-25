@@ -54,7 +54,6 @@ class SimpleProperty<T> implements Property<T> {
 
 }
 
-
 /// A property that converts its value to an easily serializable form for storing
 abstract class DataProperty<T> implements Property<T> {
   dynamic _data;

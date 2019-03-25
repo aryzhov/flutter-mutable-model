@@ -1,10 +1,8 @@
 part of mutable_model;
 
-typedef Model<P> ModelFactory<P extends Property>();
+abstract class Model extends ChangeNotifier {
 
-abstract class Model<P extends Property> extends ChangeNotifier {
-
-  Iterable<P> get properties;
+  Iterable<Property> get properties;
   bool _flushing = false;
   bool _repeatFlush = false;
 
@@ -40,7 +38,7 @@ abstract class Model<P extends Property> extends ChangeNotifier {
     return false;
   }
 
-  void copyFrom(Model<P> other, {bool clearChanges = true}) {
+  void copyFrom(Model other, {bool clearChanges = true}) {
     var it0 = other.properties.iterator;
     var it1 = this.properties.iterator;
     while(it0.moveNext() && it1.moveNext()) {
