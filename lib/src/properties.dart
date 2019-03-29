@@ -7,7 +7,9 @@ abstract class Property<T> {
   bool changed;
   bool equals(Property<T> other);
   void copyFrom(Property<T> other);
-
+  bool get isNull;
+  bool get isNotNull;
+  
   factory Property([T initialValue]) => SimpleProperty<T>(initialValue);
 }
 
@@ -29,6 +31,12 @@ class SimpleProperty<T> implements Property<T> {
       oldValue = value;
   }
 
+  @override
+  bool get isNull => value == null;
+
+  @override
+  bool get isNotNull => value != null;
+
   SimpleProperty([T initialValue]) {
     value = initialValue;
     changed = false;
@@ -41,11 +49,7 @@ class SimpleProperty<T> implements Property<T> {
 
   /// Override this method for custom comparison
   bool valueEquals(T otherValue) {
-    final thisValue = this.value;
-    if(thisValue is DateTime && otherValue is DateTime)
-      return thisValue.compareTo(otherValue) == 0;
-    else
-      return value == otherValue;
+    return value == otherValue;
   }
 
   void copyFrom(Property<T> other) {
@@ -78,6 +82,13 @@ abstract class DataProperty<T> implements Property<T> {
 
   @override
   bool get changed => _changed;
+
+  @override
+  bool get isNull => _data == null;
+
+  @override
+  bool get isNotNull => _data != null;
+
 
   @override
   set changed(ch) {
@@ -154,6 +165,11 @@ class IntProp extends DataProperty<int>{
   IntProp([int initialValue]): super(initialValue);
 
   @override
+  int dataToValue(dynamic data) {
+    return data is double ? data.toInt(): data;
+  }
+
+  @override
   int valueToData(v) {
     return v is double ? v.toInt(): v;
   }
@@ -168,6 +184,11 @@ class IntProp extends DataProperty<int>{
 class DoubleProp extends DataProperty<double>{
 
   DoubleProp([double initialValue]): super(initialValue);
+
+  @override
+  double dataToValue(dynamic data) {
+    return data is int ? data.toDouble(): data;
+  }
 
   @override
   double valueToData(v) {
