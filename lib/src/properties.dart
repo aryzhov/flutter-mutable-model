@@ -268,16 +268,31 @@ class DateTimeProp extends DataProperty<DateTime> {
   }
 }
 
-
+/// A base class for properties that store their data as a Map
+/// Provides an equality function that compares the serialized versions of the object
 abstract class MapProp<T> extends DataProperty<T> {
 
   static const equality = MapEquality();
 
   bool dataEquals(newData) {
-    if(data != null && newData != null)
+    if(data is Map && newData is Map)
         return equality.equals(data, newData);
     else
-      return value == newData;
+      return data == newData;
+  }
+
+}
+
+/// A property that stores its data as a list.
+class ListProp<T> extends DataProperty<List<T>> {
+
+  static const equality = ListEquality();
+
+  bool dataEquals(newData) {
+    if(data is List && newData is List)
+        return equality.equals(data, newData);
+    else
+      return data == newData;
   }
 
 }
