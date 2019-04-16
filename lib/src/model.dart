@@ -129,7 +129,7 @@ class Changed extends Snapshot {
   dynamic getBaseValue(Property prop) => _base[prop];
 }
 
-abstract class Model extends ChangeNotifier {
+class Model extends ChangeNotifier {
   bool _flushing = false;
   Snapshot _snapshot;
   MetaModel get meta => _snapshot.meta;
