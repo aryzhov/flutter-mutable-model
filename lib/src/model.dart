@@ -2,105 +2,173 @@ part of mutable_model;
 
 abstract class MetaModel {
 
-  Map<Property, int> _indexes;
-  Iterable<Property> get properties;
+  final List<Property> properties;
+  Unchanged _defaults;
 
-  int indexOf(Property p, {bool nullIfAbsent = false}) {
-    if(_indexes == null) {
-      _indexes = Map<Property, int>();
-      int idx = 0;
-      for(var p in properties)
-        _indexes[p] = idx++;
+  MetaModel(this.properties) {
+    final props = properties;
+    for(var i = 0; i < props.length; i++)  {
+      final p = props[i];
+      if(p.index == null)
+        p.index = i;
+      else
+        assert(p.index == null, "Property is used in another model with a different index");
     }
-    final result = _indexes[p];
-    assert(result != null && !nullIfAbsent, "Property not found");
+    _defaults = Unchanged(this, props.map((p) => p.initial));
+  }
+
+  get defaults => _defaults;
+
+  bool contains(Property p) {
+    final idx = p.index;
+    return idx != null && idx < properties.length && properties[idx] == p;
+  }
+
+  int indexOf(Property p) {
+    final result = p.index;
+    assert(properties[result] == p);
     return result;
   }
+
 }
 
-abstract class Model<MM extends MetaModel> extends ChangeNotifier {
 
-  bool _flushing = false;
+abstract class Snapshot {
+  final MetaModel meta;
+  Snapshot(this.meta);
+  dynamic operator[](Property prop);
+  void operator []=(Property prop, dynamic data);
+  bool get changed;
+  bool get locked;
+  Snapshot clone();
+  Unchanged applyChanges();
+  bool isChanged(Property prop);
+  dynamic getBaseValue(Property prop);
 
-  MM get meta;
+}
 
-  List<dynamic> _data;
-  Map<Property, dynamic> _changes;
+class Unchanged extends Snapshot {
 
-  List<dynamic> get data {
-    if(_data == null)
-      _data = List.unmodifiable(meta.properties.map((p) => p.store(p.initial)));
-    return _data;
+  final List<dynamic> _data;
+
+  Unchanged(MetaModel meta, this._data): super(meta);
+
+  dynamic operator[](Property prop) {
+    return _data[meta.indexOf(prop)];
   }
 
-  bool get changed {
-    return _changes?.isNotEmpty ?? false;
+  void operator []=(Property prop, dynamic data) {
+    assert(false, "Can't modify immutable snapshot");
   }
 
-  Map<Property, dynamic> get changes {
-    return _changes;
-  }
+  get changed => false;
 
-  T operator[]<T>(Property<T> prop) {
-    return prop.load(_getData(prop));
-  }
+  get locked => true;
 
-  dynamic _getData(Property prop) {
-    if(changed && _changes.containsKey(prop))
+  clone() => this; 
+
+  applyChanges() => this;
+
+  isChanged(Property prop) => false;
+
+  dynamic getBaseValue(Property prop) => this[prop];
+
+}
+
+
+class Changed extends Snapshot {
+
+  final Map<Property, dynamic> _changes;
+  final Snapshot _base;
+  bool _locked = false;
+
+  Changed(this._base): _changes = Map<Property, dynamic>(), super(_base.meta);
+
+  Snapshot get base => _base;
+
+  dynamic operator[](Property prop) {
+    if(_changes.containsKey(prop))
       return _changes[prop];
-    return data[meta.indexOf(prop)];
+    else
+      return base[prop];
   }
 
-  void operator []=<T>(Property prop, T value) {
-    _setData(prop, prop.store(value));
-  }
-
-  void _setData(Property prop, dynamic d) {
-    if(prop.dataEquals(d, data[meta.indexOf(prop)])) {
-      if(_changes != null) {
-        _changes.remove(prop);
-        if(_changes.isEmpty)
-          _changes = null;
-      }
+  void operator []=(Property prop, dynamic d) {
+    assert(!_locked, "Cannot modify a locked snapshot");
+    if(prop.dataEquals(d, base[prop])) {
+      _changes.remove(prop);
     } else {
-      if(_changes == null)
-        _changes = Map<Property, dynamic>();
       _changes[prop] = d;
     }
   }
 
+  get changed => _changes.isNotEmpty;
+
+  get locked => _locked;
+
   bool isChanged(Property prop) {
-    return _changes != null && _changes.containsKey(prop);
+    return prop.dataEquals(getBaseValue(prop), prop);
   }
+
+  void lock() {
+    this._locked = true;
+  }
+
+  clone() => Changed(this.base).._changes.addAll(this._changes);
+  
+  Unchanged applyChanges() {
+    if(changed)
+      return Unchanged(meta, meta.properties.map((p) => this[p]));
+    else {
+      return base.applyChanges();
+    }
+  }
+
+  dynamic getBaseValue(Property prop) => _base[prop];
+
+}
+
+
+abstract class Model extends ChangeNotifier {
+  bool _flushing = false;
+  Snapshot _snapshot;
+  MetaModel get meta => _snapshot.meta;
+
+  Model(this._snapshot); 
+
+  Snapshot get snapshot => _snapshot;
+
+  T operator[]<T>(Property<T> prop) {
+    return prop.load(_snapshot[prop]);
+  }
+
+  void operator []=<T>(Property prop, T value) {
+    if(_snapshot.locked)
+      _snapshot = Changed(_snapshot);
+    _snapshot[prop] = prop.store(value);
+  }
+
+  bool isChanged(Property prop) => _snapshot.isChanged(prop);
+
+  T getOldValue<T>(Property<T> prop) => prop.load(_snapshot.getBaseValue(prop));
 
   /// Fires a change event and clears the change flag on all properties. Returns true if there were changes.
   bool flushChanges() {
     if(_flushing) {
       return false;
     }
-    onFlushChanges();
-    if(!changed)
-      return false;
-    final ch = Map.from(_changes);
+    _flushing = true;
     try {
-      _flushing = true;
-      notifyListeners();
+      while(!_snapshot.locked && _snapshot.changed) {
+        onFlushChanges();
+        if(_snapshot.changed) {
+          (_snapshot as Changed).lock();
+          notifyListeners();
+        }
+      }
     } finally {
       _flushing = false;
-      
-      var data2 = List.from(_data);
-      for(var me in ch.entries) {
-        final prop = me.key;
-        final newData = me.value;
-        data2[meta.indexOf(prop)] = newData;
-        if(_changes.containsKey(prop) && prop.dataEquals(_changes[prop], newData))
-          _changes.remove(prop);
-      }
-      _data = List.unmodifiable(data2);
-      if(_changes.isNotEmpty)
-        flushChanges();
-      else
-        _changes = null;
+      _snapshot = _snapshot.applyChanges();
     }
     return true;
   }
@@ -111,14 +179,13 @@ abstract class Model<MM extends MetaModel> extends ChangeNotifier {
   }
 
   void copyFrom(Model other, {bool clearChanges = true}) {
-    assert(this.meta == other.meta, "Can only copy models with the same meta class");
-    if(clearChanges) {
-      this._data = other._data;
-      this._changes = other._changes != null ? Map.from(other._changes): null;
+    if(this.meta == other.meta) {
+      this._snapshot = clearChanges ? other._snapshot.applyChanges(): other._snapshot.clone();
     }
     else {
       for(var p in meta.properties) {
-        this._setData(p, other._getData(p));
+        if(other.meta.contains(p))
+          this.snapshot[p] = other.snapshot[p];
       }
     }
   }

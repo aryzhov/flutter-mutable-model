@@ -2,6 +2,7 @@ part of mutable_model;
 
 /// A property contains a value that can be changed.
 abstract class Property<T> {
+  int index;
   dynamic store(T value) => value;
   T load(dynamic value) => value as T;
   bool dataEquals(dynamic a, dynamic b) => a == b;
