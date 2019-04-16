@@ -12,6 +12,7 @@ abstract class Model extends ChangeNotifier {
       _repeatFlush = true;
       return false;
     }
+    onFlushChanges();
     final changed = Set.from(properties.where((p) => p.changed));
     if(changed.isEmpty)
       return false;
@@ -30,8 +31,13 @@ abstract class Model extends ChangeNotifier {
     return true;
   }
 
+  /// A hook to perform calculations before firing [notifyListeners].
+  @protected
+  void onFlushChanges() {
+  }
+
   /// Returns true if any of the properties has changed.
-  get changed {
+  bool get changed {
     for(var p in properties)
       if(p.changed)
         return true;
