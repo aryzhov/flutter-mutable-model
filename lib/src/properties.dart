@@ -17,7 +17,6 @@ abstract class Prop<T> extends Property<T> {
 
 }
 
-
 class StringProp extends Prop<String> {
 
   StringProp([String initial]): super(initial);
