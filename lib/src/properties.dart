@@ -9,7 +9,7 @@ abstract class Property<T> {
   T get initial => null;
 }
 
-abstract class Prop<T> extends Property<T> {
+class Prop<T> extends Property<T> {
   final T initial;
 
   Prop([this.initial]);
@@ -105,14 +105,33 @@ abstract class MapProp<T> extends Prop<T> {
 
 /// A property that stores its data as a list.
 class ListProp<T> extends Prop<List<T>> {
-  static const equality = ListEquality();
 
-  ListProp(List<T> initial) : super(initial);
+  final Property<T> element;
+
+  ListProp(this.element, List<T> initial) : super(initial);
 
   bool dataEquals(a, b) {
-    if (a is List && b is List)
-      return equality.equals(a, b);
-    else
+    if (a is List && b is List) {
+      if(a.length != b.length)
+        return false;
+      for(int i = 0; i < a.length; i++)
+        if(!element.dataEquals(a, b))
+          return false;
+      return true;
+    } else {
       return a == b;
+    }
   }
+
+  dynamic store(List<T> value) {
+    return value?.map((v) => element.store(v))?.toList();
+  }
+
+  List<T> load(dynamic value) {
+    if(value is List)
+      return value?.map((d) => element.load(d))?.toList();
+    else
+      return null;
+  }
+
 }

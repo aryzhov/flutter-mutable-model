@@ -1,31 +1,37 @@
 part of mutable_model;
 
 abstract class MetaModel {
-  final List<Property> properties;
+  List<Property> get properties;
+  List<Property> _properties;
   Unchanged _defaults;
 
-  MetaModel(this.properties) {
-    final props = properties;
-    for (var i = 0; i < props.length; i++) {
-      final p = props[i];
+  void init() {
+    if(_properties != null)
+      return;
+    _properties = properties;
+    for (var i = 0; i < _properties.length; i++) {
+      final p = _properties[i];
       if (p.index == null)
         p.index = i;
       else
         assert(p.index == null, "Property is used in another model with a different index");
     }
-    _defaults = Unchanged(this, props.map((p) => p.initial));
+    _defaults = Unchanged(this, _properties.map((p) => p.initial));
   }
 
-  get defaults => _defaults;
+  Unchanged get defaults {
+    init();
+    return _defaults;
+  }
 
   bool contains(Property p) {
     final idx = p.index;
-    return idx != null && idx < properties.length && properties[idx] == p;
+    return idx != null && idx < _properties.length && _properties[idx] == p;
   }
 
   int indexOf(Property p) {
     final result = p.index;
-    assert(properties[result] == p);
+    assert(_properties[result] == p);
     return result;
   }
 }
@@ -114,7 +120,7 @@ class Changed extends Snapshot {
 
   Unchanged applyChanges() {
     if (changed)
-      return Unchanged(meta, meta.properties.map((p) => this[p]));
+      return Unchanged(meta, meta._properties.map((p) => this[p]));
     else {
       return base.applyChanges();
     }
@@ -132,11 +138,11 @@ abstract class Model extends ChangeNotifier {
 
   Snapshot get snapshot => _snapshot;
 
-  T operator []<T>(Property<T> prop) {
+  T get<T>(Property<T> prop) {
     return prop.load(_snapshot[prop]);
   }
 
-  void operator []=<T>(Property prop, T value) {
+  void set<T>(Property prop, T value) {
     if (_snapshot.locked) _snapshot = Changed(_snapshot);
     _snapshot[prop] = prop.store(value);
   }
@@ -170,13 +176,9 @@ abstract class Model extends ChangeNotifier {
   @protected
   void onFlushChanges() {}
 
-  void copyFrom(Model other, {bool clearChanges = true}) {
-    if (this.meta == other.meta) {
-      this._snapshot = clearChanges ? other._snapshot.applyChanges() : other._snapshot.clone();
-    } else {
-      for (var p in meta.properties) {
-        if (other.meta.contains(p)) this.snapshot[p] = other.snapshot[p];
-      }
+  void copyFrom(Model other, [List<Property> properties]) {
+    for (var p in properties ?? meta._properties) {
+      if (other.meta.contains(p)) this.snapshot[p] = other.snapshot[p];
     }
   }
 }
