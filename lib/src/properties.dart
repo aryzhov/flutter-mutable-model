@@ -108,7 +108,7 @@ class ListProp<T> extends Prop<List<T>> {
 
   final Property<T> element;
 
-  ListProp(this.element, List<T> initial) : super(initial);
+  ListProp(this.element, [List<T> initial]) : super(initial);
 
   bool dataEquals(a, b) {
     if (a is List && b is List) {
