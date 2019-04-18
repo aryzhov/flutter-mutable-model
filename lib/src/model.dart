@@ -14,9 +14,9 @@ abstract class MetaModel {
       if (p.index == null)
         p.index = i;
       else
-        assert(p.index == null, "Property is used in another model with a different index");
+        assert(p.index == i, "Property $i is used in another model with a different index ${p.index}");
     }
-    _defaults = Unchanged(this, _properties.map((p) => p.initial));
+    _defaults = Unchanged(this, _properties.map((p) => p.store(p.initial)));
   }
 
   Unchanged get defaults {
@@ -31,7 +31,8 @@ abstract class MetaModel {
 
   int indexOf(Property p) {
     final result = p.index;
-    assert(_properties[result] == p);
+    assert(result != null, "Property not registered");
+    assert(_properties[result] == p, "Property belongs to another meta model");
     return result;
   }
 }
@@ -52,7 +53,7 @@ abstract class Snapshot {
 class Unchanged extends Snapshot {
   final List<dynamic> _data;
 
-  Unchanged(MetaModel meta, Iterable<Property> data)
+  Unchanged(MetaModel meta, Iterable<dynamic> data)
       : _data = data.toList(growable: false),
         super(meta);
 
@@ -196,13 +197,35 @@ class Model extends ChangeNotifier {
     return true;
   }
 
+  @override
+  void addListener(listener) {
+    final hadListeners = hasListeners;
+    super.addListener(listener);
+    if(!hadListeners && hasListeners)
+      onHasListeners();
+  }
+
+  @override
+  void removeListener(listener) {
+    final hadListeners = hasListeners;
+    super.removeListener(listener);
+    if(hadListeners && !hasListeners)
+      onNoListeners();
+  }
+
   /// A hook to perform calculations before firing [notifyListeners].
   @protected
   void onFlushChanges() {}
 
+  @protected
+  void onHasListeners() {}
+
+  @protected
+  void onNoListeners() {}
+
   void copyFrom(Model other, [List<Property> properties]) {
     for (var p in properties ?? meta._properties) {
-      if (other.meta.contains(p)) this.snapshot[p] = other.snapshot[p];
+      if (other.meta.contains(p)) this.setData(p, other.getData(p));
     }
   }
 }
