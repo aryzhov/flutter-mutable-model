@@ -138,16 +138,40 @@ class Model extends ChangeNotifier {
 
   Snapshot get snapshot => _snapshot;
 
+  @protected
   T get<T>(Property<T> prop) {
     return prop.load(_snapshot[prop]);
   }
 
+  @protected
+  dynamic getData(Property prop) => _snapshot[prop];
+
+  @protected
   void set<T>(Property prop, T value) {
-    if (_snapshot.locked) _snapshot = Changed(_snapshot);
+    allowChanges();
     _snapshot[prop] = prop.store(value);
   }
 
+  @protected
+  void setData(Property prop, dynamic data) {
+    allowChanges();
+    _snapshot[prop] = data;
+  }
+
+  @protected
+  void allowChanges() {
+    if (_snapshot.locked) _snapshot = Changed(_snapshot);
+  }
+
   bool isChanged(Property prop) => _snapshot.isChanged(prop);
+
+  bool anyChanged(List<Property> props) {
+    for(var p in props) {
+      if(_snapshot.isChanged(p))
+        return true;
+    }
+    return false;
+  }
 
   T getOldValue<T>(Property<T> prop) => prop.load(_snapshot.getBaseValue(prop));
 
