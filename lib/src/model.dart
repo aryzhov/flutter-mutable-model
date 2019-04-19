@@ -179,13 +179,15 @@ class Model extends ChangeNotifier {
   /// Fires a change event and clears the change flag on all properties. Returns true if there were changes.
   bool flushChanges() {
     if (_flushing) {
-      return false;
+      return !_snapshot.locked && _snapshot.changed;
     }
     _flushing = true;
+    bool result = false;
     try {
       while (!_snapshot.locked && _snapshot.changed) {
         onFlushChanges();
         if (_snapshot.changed) {
+          result = true;
           (_snapshot as Changed).lock();
           notifyListeners();
         }
@@ -194,7 +196,7 @@ class Model extends ChangeNotifier {
       _flushing = false;
       _snapshot = _snapshot.applyChanges();
     }
-    return true;
+    return result;
   }
 
   @override
