@@ -13,4 +13,5 @@ part 'package:mutable_model/src/model_provider.dart';
 part 'package:mutable_model/src/model_map.dart';
 part 'package:mutable_model/src/model_list_view.dart';
 part 'package:mutable_model/src/properties.dart';
+part 'package:mutable_model/src/stored_model.dart';
 part 'package:mutable_model/src/utils.dart';

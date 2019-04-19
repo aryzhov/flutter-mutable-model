@@ -135,3 +135,23 @@ class ListProp<T> extends Prop<List<T>> {
   }
 
 }
+
+abstract class StoredProperty<T> implements Property<T> {
+  final Property<T> prop;
+  int index;
+  final String name;
+
+  StoredProperty(this.name, this.prop);
+
+  dynamic store(T value) => prop.store(value);
+  T load(dynamic value) => prop.load(value);
+  bool dataEquals(dynamic a, dynamic b) => prop.dataEquals(a, b);
+  T get initial => prop.initial;
+
+  dynamic readFrom(Map<dynamic, dynamic> data);
+
+  void writeTo(dynamic modelData, Map<dynamic, dynamic> data);
+
+  void calcChanges(dynamic modelData, Map<dynamic, dynamic> data, Map<dynamic, dynamic> changes);
+
+}
