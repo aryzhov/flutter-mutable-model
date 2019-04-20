@@ -43,11 +43,13 @@ abstract class StoredModel extends Model {
   @override
   StoredMetaModel get meta => super.meta as StoredMetaModel;
 
-  void readFrom(Map<String, dynamic> data, [List<StoredProperty> attrs]) {
+  readFrom(Map<String, dynamic> data, [List<StoredProperty> attrs]) {
     if(data == null)
       return;
-    for(var attr in StoredMetaModel.checkAttrs(attrs) ?? this.meta.cachedAttrs)
+    final attrs2 = StoredMetaModel.checkAttrs(attrs) ?? this.meta.cachedAttrs;
+    for(var attr in attrs2)
       setData(attr, attr.readFrom(data));
+    this.data = createData(attrs2);
     loaded = true;
   }
 

@@ -4,7 +4,7 @@ part of mutable_model;
 abstract class Property<T> {
   int index;
   dynamic store(T value) => value;
-  T load(dynamic value) => value as T;
+  T load(dynamic value) => value is T ? value as T: null;
   bool dataEquals(dynamic a, dynamic b) => a == b;
   T get initial => null;
 }
@@ -22,7 +22,7 @@ class StringProp extends Prop<String> {
 class BoolProp extends Prop<bool> {
   BoolProp([bool initial]) : super(initial);
 
-  bool load(dynamic value) => value as bool ?? false;
+  bool load(dynamic value) => value is bool ? value as bool : false;
 }
 
 class IntProp extends Prop<int> {
@@ -30,7 +30,7 @@ class IntProp extends Prop<int> {
 
   @override
   int load(dynamic data) {
-    return data is double ? data.toInt() : data;
+    return data is double ? data.toInt() : data is int ? data: null;
   }
 
   @override
@@ -44,7 +44,7 @@ class DoubleProp extends Prop<double> {
 
   @override
   double load(dynamic data) {
-    return data is int ? data.toDouble() : data;
+    return data is int ? data.toDouble() : data is double ? data: null;
   }
 }
 
@@ -54,7 +54,7 @@ class EnumProp<E> extends Prop<E> {
   EnumProp(this.enumValues, [E initial]) : super(initial);
 
   @override
-  load(data) => parseEnum(enumValues, data as String);
+  load(data) => data is String ? parseEnum(enumValues, data as String): null;
 
   @override
   store(value) => enumStr(value);
@@ -68,7 +68,7 @@ class IntStrProp extends Prop<int> {
   store(i) => i == null ? null : "$i";
 
   @override
-  load(data) => data == null ? null : int.parse(data as String);
+  load(data) => data is String ? int.parse(data as String): null;
 }
 
 class BoolStrProp extends Prop<bool> {
@@ -78,7 +78,7 @@ class BoolStrProp extends Prop<bool> {
   BoolStrProp([bool initial]) : super(initial);
 
   @override
-  load(data) => data == null ? null : (data as String).toLowerCase() == trueStr;
+  load(data) => data is String ? (data as String).toLowerCase() == trueStr: null;
 
   @override
   store(b) => b == null ? null : b ? trueStr : falseStr;
