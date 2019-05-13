@@ -5,3 +5,4 @@ ios/
 build/
 pubspec.lock
 *.iml
+.dart_tool/

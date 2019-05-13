@@ -19,7 +19,8 @@ class ModelMapEntry<K, V> extends OrderedMapEntry<K, V> {
 
 }
 
-class ModelMap<K, V> extends OrderedMap<K, V> with ChangeNotifier {
+// Changed the order of extends/with as a workaround for https://github.com/flutter/flutter/issues/32644
+class ModelMap<K, V> extends ChangeNotifier with OrderedMap<K, V> {
 
   final bool notifyListenersOnValueChange;
 
