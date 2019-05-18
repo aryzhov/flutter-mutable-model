@@ -22,9 +22,21 @@ class ModelMapEntry<K, V> extends OrderedMapEntry<K, V> {
 class ModelMap<K, V> extends OrderedMap<K, V> with ChangeNotifier {
 
   final bool notifyListenersOnValueChange;
+  bool _loaded;
 
-  ModelMap({this.notifyListenersOnValueChange = false}) {
+  get loaded => _loaded;
+
+  set loaded(bool value) {
+    if(_loaded != value) {
+      _loaded = value;
+      notifyListeners();
+    }
+  }
+
+  ModelMap({this.notifyListenersOnValueChange = false, loaded = true}): _loaded = loaded {
     stream.listen((change) {
+      if(_loaded)
+        return;
       if(change is OrderedMapValueChange && !notifyListenersOnValueChange)
         return;
       notifyListeners();
