@@ -47,7 +47,7 @@ typedef bool Filter<K, V>(OrderedMapEntry<K, V> entry);
 class OrderedMap<K, V> implements Map<K, V> {
   final List<OrderedMapEntry<K, V>> _list = List<OrderedMapEntry<K, V>>();
   final Map<K, OrderedMapEntry<K, V>> _map = Map<K, OrderedMapEntry<K, V>>();
-  final StreamController<OrderedMapChange<K, V>> _streamController = StreamController<OrderedMapChange<K, V>>();
+  final StreamController<OrderedMapChange<K, V>> _streamController = StreamController<OrderedMapChange<K, V>>.broadcast(sync: true);
   Comparator<OrderedMapEntry<K, V>> _compareFunc;
 
   // Removed as a workaround for issue https://github.com/flutter/flutter/issues/32644
@@ -96,7 +96,7 @@ class OrderedMap<K, V> implements Map<K, V> {
       _list.insert(idx, entry);
       for(var i = idx + 1; i < _list.length; i++)
         _list[i]._idx = i;
-      _streamController.add(OrderedMapAdd(this, oldEntry));
+      _streamController.add(OrderedMapAdd(this, entry));
     } else {
       entry._idx = oldEntry._idx;
       _map[key] = entry;
