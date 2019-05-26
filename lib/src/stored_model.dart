@@ -22,9 +22,15 @@ abstract class StoredMetaModel extends MetaModel {
   }
 
   static List<StoredProperty> checkAttrs(final List<StoredProperty> attrs) {
+    List<String> getDuplicates() {
+      return attrs.map((a) => a.name).toSet().where((n) {
+        return 1 < attrs.map((a) => a.name == n ? 1: 0).reduce((x, y) => x + y);
+      }).toList();
+    }
+    
     assert(() {
-      return attrs == null || attrs.length == Set.from(attrs.map((a) => a.name)).length;
-    }(), "Attributes contain a duplicate name");
+      return attrs == null || getDuplicates().length == 0;
+    }(), "Attributes contain a duplicate name: ${getDuplicates()}");
     return attrs;
   }
 
