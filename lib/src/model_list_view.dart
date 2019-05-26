@@ -37,7 +37,7 @@ class ModelListView<E extends Listenable> extends StatelessWidget {
       return itemBuilderUsesIndex ? item : Container(key: Key(entry.key), child: item,);
     }
 
-    final listItemCount = modelMap.length == 0 && emptyListBuilder != null ? 1 : modelMap.length;
+    final listItemCount = modelMap.length == 0 && emptyListBuilder != null && modelMap.loaded ? 1 : modelMap.length;
 
     if(separatorBuilder != null)
       return ListView.separated(itemBuilder: listItemBuilder, separatorBuilder: separatorBuilder, itemCount: listItemCount);

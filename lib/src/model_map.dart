@@ -35,7 +35,7 @@ class ModelMap<K, V> extends OrderedMap<K, V> with ChangeNotifier {
 
   ModelMap({this.notifyListenersOnValueChange = false, loaded = true}): _loaded = loaded {
     stream.listen((change) {
-      if(_loaded)
+      if(!_loaded)
         return;
       if(change is OrderedMapValueChange && !notifyListenersOnValueChange)
         return;
