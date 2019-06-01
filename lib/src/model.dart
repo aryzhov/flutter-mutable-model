@@ -110,7 +110,7 @@ class Changed extends Snapshot {
   get locked => _locked;
 
   bool isChanged(Property prop) {
-    return prop.dataEquals(getBaseValue(prop), prop);
+    return _changes.containsKey(prop) && !prop.dataEquals(_base[prop], _changes[prop]);
   }
 
   void lock() {
