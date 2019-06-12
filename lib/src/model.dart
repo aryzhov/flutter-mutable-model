@@ -139,7 +139,11 @@ class Model extends ChangeNotifier {
 
   Snapshot get snapshot => _snapshot;
 
-  @protected
+  Binding<T> bind<T>(Property<T> prop, [bool canChange = true]) {
+    assert(meta.contains(prop), "Property not found");
+    return Binding(this, prop, canChange);
+  }
+
   T get<T>(Property<T> prop) {
     return prop.load(_snapshot[prop]);
   }
@@ -147,7 +151,6 @@ class Model extends ChangeNotifier {
   @protected
   dynamic getData(Property prop) => _snapshot[prop];
 
-  @protected
   void set<T>(Property prop, T value) {
     allowChanges();
     _snapshot[prop] = prop.store(value);
