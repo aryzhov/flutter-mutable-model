@@ -65,9 +65,10 @@ class ModelConsumerState<M extends Listenable> extends State<ModelConsumer<M>> {
   @override
   void didUpdateWidget(ModelConsumer<M> oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.model != null && widget.model != model) {
+    final model2 = widget.model ?? ModelProvider.of<M>(context, rebuildOnChange: false);
+    if (model2 != model) {
       model.removeListener(_modelChanged);
-      model = widget.model;
+      model = model2;
       model.addListener(_modelChanged);
     }
   }
