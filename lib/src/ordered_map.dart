@@ -157,14 +157,14 @@ class OrderedMap<K, V> implements Map<K, V> {
     assert(fromIdx >= 0);
     assert(toIdx >= 0);
     assert(fromIdx < _list.length);
-    assert(toIdx < _list.length);
+    assert(toIdx <= (toIdx > fromIdx ? _list.length: _list.length - 1));
     if(fromIdx == toIdx)
       return;
     var entry = _list[fromIdx];
     _list.removeAt(fromIdx);
-    _list.insert(toIdx, entry);
-    if(fromIdx < toIdx) {
-      for(var i = fromIdx; i <= toIdx; i++)
+    _list.insert(toIdx > fromIdx ? toIdx - 1: toIdx , entry);
+    if(toIdx > fromIdx) {
+      for(var i = fromIdx; i <= toIdx-1; i++)
         _list[i]._idx = i;
     } else {
       for(var i = toIdx; i <= fromIdx; i++)
