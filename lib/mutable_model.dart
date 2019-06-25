@@ -1,7 +1,5 @@
 library mutable_model;
 
-import 'dart:js_util';
-
 import 'package:collection/collection.dart';
 import 'package:collection/equality.dart';
 import 'package:flutter/foundation.dart';
