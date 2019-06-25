@@ -1,11 +1,6 @@
 part of mutable_model;
 
-import 'package:flutter_web/material.dart';
-import 'dart:async';
-import 'package:mutable_model/mutable_model.dart';
-
-
-class MasterDetail<M extends FirestoreModel, D extends FirestoreModel>extends ChangeNotifier {
+class MasterDetail<M extends StoredModel, D extends StoredModel>extends ChangeNotifier {
   final M master;
   final ModelMap<String, D> details;
 
@@ -16,14 +11,14 @@ class MasterDetail<M extends FirestoreModel, D extends FirestoreModel>extends Ch
 }
 
 /// Returns the ID of the master
-typedef String MasterLocator<D extends FirestoreModel>(D detail);
-typedef ModelMap<String, D> ModelMapFactory<D extends FirestoreModel>();
+typedef String MasterLocator<D extends StoredModel>(D detail);
+typedef ModelMap<String, D> ModelMapFactory<D extends StoredModel>();
 
-ModelMap<String, D> defaultMapFactory<D extends FirestoreModel>() {
+ModelMap<String, D> defaultMapFactory<D extends StoredModel>() {
   return ModelMap<String, D>(loaded: false, notifyListenersOnValueChange: false);
 }
 
-class MasterDetailComposer<M extends FirestoreModel, D extends FirestoreModel> {
+class MasterDetailComposer<M extends StoredModel, D extends StoredModel> {
   
   final ModelMap<String, MasterDetail<M, D>> masterDetailMap;
   final ModelMap<String, M> masterMap;
