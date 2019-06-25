@@ -10,6 +10,7 @@ import 'dart:async';
 import 'dart:collection';
 
 part 'package:mutable_model/src/binding.dart';
+part 'package:mutable_model/src/master_detail.dart';
 part 'package:mutable_model/src/model.dart';
 part 'package:mutable_model/src/model_provider.dart';
 part 'package:mutable_model/src/model_map.dart';
