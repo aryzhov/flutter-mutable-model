@@ -67,9 +67,9 @@ class OrderedMapUnion<K, V> with Disposable {
             if(oldEntry != null && oldEntry.srcIdx == srcIdx) {
               target.valueChanged(entry.key, event.data);
             }
-          } else if(event is OrderedMapLoaded) {
-            updateLoaded();
           }
+        } else if(event is OrderedMapLoaded) {
+          updateLoaded();
         }
       }));
 

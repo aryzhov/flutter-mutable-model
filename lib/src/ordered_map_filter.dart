@@ -36,9 +36,9 @@ class OrderedMapFilter<K, V> with Disposable {
             target.put(entry.key, entry.value);
           else
             target.remove(entry.key);
-        } else if(event is OrderedMapLoaded) {
-          target.loaded = source.loaded;
         }
+      } else if(event is OrderedMapLoaded) {
+        target.loaded = source.loaded;
       }
     });
   }
