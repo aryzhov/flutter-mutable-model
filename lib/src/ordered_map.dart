@@ -33,12 +33,17 @@ class OrderedMapValueChange<K, V> extends OrderedMapChange<K, V> {
   OrderedMapValueChange(OrderedMap<K, V> map, OrderedMapEntry<K, V> entry, this.data): super(map, entry);
 }
 
+class OrderedMapLoaded<K, V> extends OrderedMapEvent<K, V> {
+  bool loaded;
+  OrderedMapLoaded(OrderedMap<K, V> map, this.loaded): super(map);
+}
+
 class OrderedMapEntry<K, V> implements MapEntry<K, V> {
   final K key;
   final V value;
   int _idx;
 
-  OrderedMapEntry(this.key, this.value, this._idx);
+  OrderedMapEntry(this.key, this.value, [this._idx]);
 
   get idx => _idx;
 
@@ -46,13 +51,24 @@ class OrderedMapEntry<K, V> implements MapEntry<K, V> {
 }
 
 typedef int Comparator<T>(T a, T b);
-typedef bool Filter<K, V>(OrderedMapEntry<K, V> entry);
 
 class OrderedMap<K, V> implements Map<K, V> {
   final List<OrderedMapEntry<K, V>> _list = List<OrderedMapEntry<K, V>>();
   final Map<K, OrderedMapEntry<K, V>> _map = Map<K, OrderedMapEntry<K, V>>();
   final StreamController<OrderedMapEvent<K, V>> _streamController = StreamController<OrderedMapEvent<K, V>>.broadcast(sync: true);
   Comparator<OrderedMapEntry<K, V>> _compareFunc;
+  bool _loaded;
+
+  OrderedMap({bool loaded = true}): this._loaded = loaded;
+
+  get loaded => _loaded;
+
+  set loaded(bool value) {
+    if(_loaded != value) {
+      _loaded = value;
+      _streamController.add(OrderedMapLoaded<K, V>(this, value));
+    }
+  }
 
   // Removed as a workaround for issue https://github.com/flutter/flutter/issues/32644
   // OrderedMap({List<OrderedMapEntry<K, V>> list,
@@ -84,15 +100,15 @@ class OrderedMap<K, V> implements Map<K, V> {
     }
   }
 
-  OrderedMapEntry<K, V> createMapEntry(K key, V value, int idx) {
-    return OrderedMapEntry<K, V>(key, value, null);
+  OrderedMapEntry<K, V> createMapEntry(K key, V value) {
+    return OrderedMapEntry<K, V>(key, value);
   }
 
   int put(K key, V value) {
     final oldEntry = _map[key];
     if(oldEntry != null && oldEntry.value == value)
       return oldEntry._idx;
-    final entry = createMapEntry(key, value, null);
+    final entry = createMapEntry(key, value);
     if(oldEntry == null) {
       final idx = _compareFunc == null ? length : lowerBound(_list, entry, compare: _compareFunc);
       entry._idx = idx;
@@ -110,6 +126,37 @@ class OrderedMap<K, V> implements Map<K, V> {
       _checkEntryPosition(entry);
     }
     return entry._idx;
+  }
+
+  int putEntry(OrderedMapEntry<K, V> entry) {
+    final oldEntry = _map[entry.key];
+    if(oldEntry != null && oldEntry.value == entry.value)
+      return oldEntry._idx;
+    if(oldEntry == null) {
+      final idx = _compareFunc == null ? length : lowerBound(_list, entry, compare: _compareFunc);
+      entry._idx = idx;
+      _map[entry.key] = entry;
+      _list.insert(idx, entry);
+      for(var i = idx + 1; i < _list.length; i++)
+        _list[i]._idx = i;
+      _streamController.add(OrderedMapAdd(this, entry));
+    } else {
+      entry._idx = oldEntry._idx;
+      _map[entry.key] = entry;
+      _list[oldEntry._idx] = entry;
+      _streamController.add(OrderedMapReplace(this, entry, oldEntry));
+      oldEntry.dispose();
+      _checkEntryPosition(entry);
+    }
+    return entry._idx;
+  }
+
+  OrderedMapEntry<K, V> getEntry(K key) {
+    return _map[key];
+  }
+
+  OrderedMapEntry<K, V> getEntryAt(int idx) {
+    return _list[idx];
   }
 
   valueChanged(K key, [dynamic valueChangeEventData]) {
@@ -209,38 +256,6 @@ class OrderedMap<K, V> implements Map<K, V> {
   bool get isEmpty => _list.isEmpty;
   bool get isNotEmpty => _list.isNotEmpty;
 
-  // Makes this map contain a subset of items of another map
-  // The order of the elements is determined by this map's orderBy() setting.
-  StreamSubscription<OrderedMapEvent<K, V>> filter(OrderedMap<K, V> source, Filter<K, V> filter) {
-    for(var i = _list.length - 1; i >= 0; i--) {
-      final entry = _list[i];
-      if(!filter(entry))
-        remove(entry.key);
-    }
-    for(var entry in source._list) {
-      if(filter(entry)) {
-        put(entry.key, entry.value);
-      }
-    }
-    return source.stream.listen((event) {
-      if(event is OrderedMapChange) {
-        final entry = event.entry;
-        if (event is OrderedMapAdd) {
-          if (filter(entry)) {
-            put(entry.key, entry.value);
-          }
-        } else if (event is OrderedMapRemove) {
-          remove(entry.key);
-        } else if (event is OrderedMapReplace || event is OrderedMapValueChange) {
-          if (filter(event.entry))
-            put(entry.key, entry.value);
-          else
-            remove(entry.key);
-        }
-      }
-    });
-  }
-
   @override
   Iterable<V> get values {
     return _list.map((e) => e.value);
@@ -329,6 +344,18 @@ class OrderedMap<K, V> implements Map<K, V> {
   @override
   Map<K2, V2> map<K2, V2>(MapEntry<K2, V2> f(K key, V value)) {
     return Map.fromEntries(_list.map((me) => f(me.key, me.value)));
+  }
+
+  // Makes this map contain a subset of items of another map
+  // The order of the elements is determined by this map's orderBy() setting.
+  Disposable filter(OrderedMap<K, V> source, Filter<K, V> filter) {
+    return OrderedMapFilter<K, V>(this, source, filter);
+  }
+
+  // Makes this map contain a subset of items of another map
+  // The order of the elements is determined by this map's orderBy() setting.
+  Disposable union(List<OrderedMap<K, V>> sources) {
+    return OrderedMapUnion<K, V>(this, sources);
   }
 
 

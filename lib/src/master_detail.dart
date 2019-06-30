@@ -62,7 +62,7 @@ class MasterDetailComposer<M extends StoredModel, D extends StoredModel> {
         _removeMaster(event.entry.key);
       } else if(event is OrderedMapReplace) {
         _addMaster(event.entry.key, event.entry.value);
-      } else if(event is ModelMapLoaded) {
+      } else if(event is OrderedMapLoaded) {
         _calcLoaded();
       }
     });
@@ -75,7 +75,7 @@ class MasterDetailComposer<M extends StoredModel, D extends StoredModel> {
       } else if(event is OrderedMapReplace) {
         _removeDetail(event.oldEntry.key, event.oldEntry.value);
         _addDetail(event.entry.key, event.entry.value);
-      } else if(event is ModelMapLoaded) {
+      } else if(event is OrderedMapLoaded) {
         _calcLoaded();
       }
     });
