@@ -14,15 +14,15 @@ class ModelProvider<M extends Listenable> extends InheritedNotifier<M> {
       child: child,
     );
 
-  static M of<M extends Listenable>(BuildContext context, {bool rebuildOnChange = true}) {
+  static M of<M extends Listenable>(BuildContext context, {bool rebuildOnChange = true, bool optional = false}) {
 
     final type = _type<ModelProvider<M>>();
 
     final notifier = rebuildOnChange ?
         context.inheritFromWidgetOfExactType(type) :
         context.ancestorWidgetOfExactType(type);
-    assert(notifier != null);
-    return (notifier as ModelProvider<M>).notifier;
+    assert(notifier != null || optional);
+    return (notifier as ModelProvider<M>)?.notifier;
   }
 
   static Type _type<T>() => T;
