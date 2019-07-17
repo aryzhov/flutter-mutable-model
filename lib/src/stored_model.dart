@@ -70,6 +70,10 @@ abstract class StoredModel extends Model {
     return data;
   }
 
+  bool hasUnsavedChanges() {
+    return data == null || getChanges().isEmpty;
+  }
+
   Map<String, dynamic> getChanges([List<StoredProperty> attrs]) {
     if(data == null)
       return createData(attrs);

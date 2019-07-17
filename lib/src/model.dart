@@ -169,7 +169,11 @@ class Model extends ChangeNotifier {
 
   bool isChanged(Property prop) => _snapshot.isChanged(prop);
 
-  bool anyChanged(List<Property> props) {
+  bool anyChanged([List<Property> props]) {
+    if(!_snapshot.changed)
+      return false;
+    if(props == null || props == meta.properties)
+      return true;
     for(var p in props) {
       if(_snapshot.isChanged(p))
         return true;
