@@ -4,8 +4,8 @@ import 'dart:js_util';
 
 import 'package:collection/collection.dart';
 import 'package:collection/equality.dart';
-import 'package:flutter_web/foundation.dart';
-import 'package:flutter_web/widgets.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'dart:async';
 import 'dart:collection';
 
