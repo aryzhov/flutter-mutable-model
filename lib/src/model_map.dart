@@ -19,22 +19,14 @@ class ModelMapEntry<K, V> extends OrderedMapEntry<K, V> {
 
 }
 
-/// Ordered map loaded or not loaded
-class ModelMapLoaded<K, V> extends OrderedMapEvent<K, V> {
-  bool loaded;
-  ModelMapLoaded(OrderedMap<K, V> map, this.loaded): super(map);
-}
-
 // Changed the order of extends/with as a workaround for https://github.com/flutter/flutter/issues/32644
 class ModelMap<K, V> extends OrderedMap<K, V> with ChangeNotifier {
 
   final bool notifyListenersOnValueChange;
 
-  ModelMap({this.notifyListenersOnValueChange = false, loaded = true}) {
+  ModelMap({this.notifyListenersOnValueChange = false, loaded = true}): super(loaded: loaded) {
     stream.listen((change) {
-      if(change is ModelMapLoaded) {
-        loaded = change.loaded;
-      } else if(loaded) {
+      if(this.loaded) {
         if(!(change is OrderedMapValueChange) || notifyListenersOnValueChange) {
           notifyListeners();
         }
